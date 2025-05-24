@@ -1,0 +1,46 @@
+date,start,end,description,projectName,taskName,billable
+2025-05-12,07:00,09:00,Video trimmer UI enhancement planning and design review,Athlete Den,Video Trimmer Enhancement,true
+2025-05-12,10:30,13:30,Video trimmer interaction improvements and gesture handling,Athlete Den,Video Trimmer Enhancement,true
+2025-05-12,14:00,17:00,Testing video trimmer UI across different device sizes,Athlete Den,Testing,true
+
+2025-05-13,07:00,09:00,UI consistency improvements and component standardization,Athlete Den,UI Improvements,true
+2025-05-13,09:30,10:10,Weekly team meeting,Athlete Den,Meetings,false
+2025-05-13,10:30,13:30,Version 1.0(36) preparation and UI change implementation,Athlete Den,Version Update,true
+2025-05-13,14:00,17:00,User interface refinements and usability testing,Athlete Den,UI Improvements,true
+
+2025-05-14,07:00,09:00,Version update testing and deployment preparation,Athlete Den,Version Update,true
+2025-05-14,10:30,13:30,Pull request review and velocity calculation integration,Athlete Den,Code Review,true
+2025-05-14,14:00,16:00,Documentation updates for new UI changes,Athlete Den,Documentation,true
+
+2025-05-15,07:00,09:00,Alert system improvements and user experience enhancement,Athlete Den,Alert System,true
+2025-05-15,10:30,13:30,Velocity calculation reinstatement and testing,Athlete Den,Velocity Calculation,true
+2025-05-15,14:00,17:00,Analysis logging implementation and debugging tools,Athlete Den,Logging System,true
+
+2025-05-16,07:00,09:00,Code optimization and performance analysis,Athlete Den,Performance Optimization,true
+2025-05-16,09:30,10:10,Weekly team meeting,Athlete Den,Meetings,false
+2025-05-16,10:30,13:30,Bug fixes and stability improvements,Athlete Den,Bug Fixes,true
+2025-05-16,14:00,16:00,Testing improvements on various devices,Athlete Den,Testing,true
+
+2025-05-18,07:00,09:00,User flow analysis and camera position integration planning,Athlete Den,User Flow,true
+2025-05-18,10:30,13:30,Camera position selection restoration in test flow,Athlete Den,Camera Position,true
+2025-05-18,14:00,17:00,Flow testing and user experience validation,Athlete Den,User Flow,true
+
+2025-05-19,07:00,09:00,Code review and revert analysis,Athlete Den,Code Review,true
+2025-05-19,10:30,13:30,Flow refinement and user journey optimization,Athlete Den,User Flow,true
+2025-05-19,14:00,16:00,Testing different user scenarios,Athlete Den,Testing,true
+
+2025-05-20,07:00,09:00,Baseball trajectory analysis and algorithm research,Athlete Den,Trajectory Analysis,true
+2025-05-20,09:30,10:10,Weekly team meeting,Athlete Den,Meetings,false
+2025-05-20,10:30,13:30,Trajectory smoothing algorithm development,Athlete Den,Trajectory Analysis,true
+2025-05-20,14:00,17:00,False positive detection and filtering implementation,Athlete Den,Detection Algorithms,true
+
+2025-05-21,07:00,09:00,Robust trajectory smoothing implementation,Athlete Den,Trajectory Analysis,true
+2025-05-21,10:30,13:30,Baseball detection accuracy improvements,Athlete Den,Detection Algorithms,true
+2025-05-21,14:00,17:00,Camera position flow restoration and testing,Athlete Den,Camera Position,true
+
+2025-05-22,07:00,09:00,Version 1.0(37) preparation and change documentation,Athlete Den,Version Update,true
+2025-05-22,10:30,13:30,Trajectory smoothing refinement and optimization,Athlete Den,Trajectory Analysis,true
+2025-05-22,14:00,17:00,False positive removal testing and validation,Athlete Den,Testing,true
+
+2025-05-23,07:00,09:00,Final testing and quality assurance,Athlete Den,Testing,true
+2025-05-23,10:30,12:00,Pull request review and merge preparation,Athlete Den,Code Review,true
