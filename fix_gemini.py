@@ -37,37 +37,62 @@ def test_gemini_models():
                 print("❌ No models support generateContent")
                 return
             
-            # Intelligent model ranking
+            # Intelligent model ranking with dynamic version scoring
             def score_model(model):
                 name = model['name'].lower()
                 score = 0
                 
                 # Prioritize thinking models (highest priority)
                 if 'thinking' in name:
-                    score += 1000
+                    score += 10000
                     print(f"  🧠 {model['name']} (THINKING MODEL - Highest Priority)")
                 else:
                     print(f"  🤖 {model['name']}")
                 
-                # Version preferences
-                if '2.0' in name:
-                    score += 100
-                elif '1.5' in name:
-                    score += 80
-                elif '1.0' in name:
-                    score += 60
+                # Dynamic version scoring - future-proof
+                version_score = extract_version_score(name)
+                score += version_score
                 
                 # Model type preferences
-                if 'pro' in name:
-                    score += 40
+                if 'ultra' in name:
+                    score += 500
+                elif 'pro' in name:
+                    score += 400
                 elif 'flash' in name:
-                    score += 30
+                    score += 300
+                elif 'advanced' in name:
+                    score += 350
                 
-                # Experimental models
+                # Experimental models get bonus
                 if 'exp' in name or 'experimental' in name:
-                    score += 20
+                    score += 200
                 
                 return score
+            
+            def extract_version_score(model_name):
+                """Extract version number and calculate score dynamically"""
+                import re
+                
+                # Look for version patterns like 1.0, 1.5, 2.0, 2.5, 3.0, etc.
+                version_pattern = r'(\d+)\.(\d+)'
+                match = re.search(version_pattern, model_name)
+                
+                if match:
+                    major = int(match.group(1))
+                    minor = int(match.group(2))
+                    
+                    # Dynamic scoring: major version * 1000 + minor version * 100
+                    version_score = major * 1000 + minor * 100
+                    
+                    # Bonus for very new versions
+                    if major >= 4:
+                        version_score += 500  # Future versions
+                    elif major >= 3:
+                        version_score += 200  # Next-gen
+                    
+                    return version_score
+                
+                return 0  # No version found
             
             # Sort and select best model
             ranked_models = sorted(available_models, key=score_model, reverse=True)

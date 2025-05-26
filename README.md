@@ -5,7 +5,8 @@ An intelligent automation tool that generates professional work journals from Gi
 ## ✨ Features
 
 - **🔗 Multi-API Integration**: Seamlessly connects GitHub, Clockify, and Google Gemini AI
-- **🧠 Intelligent AI Model Selection**: Automatically selects the best Gemini model (prioritizes thinking models for superior reasoning)
+- **🧠 Future-Proof AI Model Selection**: Dynamically adapts to new Gemini releases (2.5, 3.0, 4.0+) with intelligent scoring
+- **🎯 Thinking Model Priority**: Automatically selects thinking models for superior reasoning and analysis
 - **🤖 AI-Powered Task Generation**: Converts GitHub commits into detailed, time-estimated tasks
 - **⏰ Automatic Time Tracking**: Creates time entries in Clockify with realistic duration estimates
 - **📊 Intelligent Reporting**: Generates Excel reports for any time range (weeks, months, quarters)
@@ -13,6 +14,27 @@ An intelligent automation tool that generates professional work journals from Gi
 - **🔒 Security-First**: Secure API key management without hardcoded credentials
 - **🛡️ Smart Error Handling**: Comprehensive error handling with helpful user guidance
 - **📱 Simple Interface**: Clean command-line interface (CLI coming soon)
+
+## 🧠 **Dynamic AI Model Selection**
+
+WorkFlow-AI-Journal features an intelligent model selection system that automatically adapts to new Google Gemini releases:
+
+### 🏆 **Scoring Algorithm**
+```
+🧠 Thinking Models: +10,000 points (highest priority)
+🔢 Version Scoring: Major × 1,000 + Minor × 100
+🚀 Future Versions (4.0+): +500 bonus  
+🌟 Next-Gen (3.0+): +200 bonus
+⚡ Model Types: Ultra (+500), Pro (+400), Flash (+300)
+🧪 Experimental: +200 bonus
+```
+
+### 🎯 **Automatic Priority**
+1. **Gemini 3.0-Flash-Thinking** → Score: ~13,500 (Future release ready)
+2. **Gemini 2.5-Pro-Thinking** → Score: ~12,900 (Hypothetical)  
+3. **Gemini 2.0-Flash-Thinking** → Score: ~12,500 (Current best)
+
+**No code updates needed** - the system automatically detects and uses the latest optimal model!
 
 ## 🚀 Quick Start
 
@@ -89,11 +111,22 @@ Run the test suite to verify all connections:
 python test_apis.py
 ```
 
+Test the dynamic model selection algorithm:
+```bash
+python test_dynamic_selection.py
+```
+
+Diagnose Gemini API issues:
+```bash
+python fix_gemini.py
+```
+
 This will:
 - ✅ Test API key configuration
 - ✅ Verify Clockify connection
 - ✅ Check GitHub access
-- ✅ Validate Gemini AI setup
+- ✅ Validate Gemini AI setup with best model
+- ✅ Demonstrate dynamic version scoring
 
 ## 📁 Project Structure
 
