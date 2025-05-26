@@ -62,25 +62,27 @@ class GeminiAPI:
                 
                 # Prioritize thinking models (highest priority)
                 if 'thinking' in name:
-                    score += 1000
+                    score += 10000  # Massive bonus for thinking models
                 
-                # Version preferences (newer versions get higher scores)
-                if '2.0' in name:
-                    score += 100
-                elif '1.5' in name:
-                    score += 80
-                elif '1.0' in name:
-                    score += 60
+                # Dynamic version scoring - future-proof for newer versions
+                version_score = self._extract_version_score(name)
+                score += version_score
                 
                 # Model type preferences
                 if 'pro' in name:
-                    score += 40
+                    score += 400  # Pro models are more capable
                 elif 'flash' in name:
-                    score += 30
+                    score += 300  # Flash models are fast and efficient
                 
-                # Experimental models get bonus points
+                # Experimental models get bonus points (often newest features)
                 if 'exp' in name or 'experimental' in name:
-                    score += 20
+                    score += 200
+                
+                # Ultra or advanced variants
+                if 'ultra' in name:
+                    score += 500
+                elif 'advanced' in name:
+                    score += 350
                 
                 return score
             
@@ -98,14 +100,62 @@ class GeminiAPI:
             logging.error(f"Error getting best model: {e}")
             return None
     
+    def _extract_version_score(self, model_name):
+        """Extract version number and calculate score dynamically"""
+        import re
+        
+        # Look for version patterns like 1.0, 1.5, 2.0, 2.5, 3.0, etc.
+        version_pattern = r'(\d+)\.(\d+)'
+        match = re.search(version_pattern, model_name)
+        
+        if match:
+            major = int(match.group(1))
+            minor = int(match.group(2))
+            
+            # Dynamic scoring: major version * 1000 + minor version * 100
+            # This ensures 3.0 > 2.5 > 2.0 > 1.5 > 1.0
+            version_score = major * 1000 + minor * 100
+            
+            # Bonus for very new versions (4.0+, 5.0+, etc.)
+            if major >= 4:
+                version_score += 500  # Future-proofing bonus
+            elif major >= 3:
+                version_score += 200  # Next-gen bonus
+            
+            return version_score
+        
+        # If no version found, check for legacy patterns
+        if 'pro' in model_name and 'gemini-pro' == model_name:
+            return 100  # Legacy gemini-pro (assumed 1.0)
+        
+        return 0  # No version information
+    
     def _fallback_model_selection(self, genai):
         """Fallback to manual model selection if auto-detection fails"""
-        # Static fallback list in order of preference
+        # Dynamic fallback list - prioritizing thinking models and newer versions
         fallback_models = [
+            # Thinking models (highest priority) - future versions
+            'gemini-3.0-flash-thinking-exp',
+            'gemini-2.5-flash-thinking-exp', 
             'gemini-2.0-flash-thinking-exp',
+            'gemini-1.5-pro-thinking-exp',
+            
+            # Latest non-thinking models
+            'gemini-3.0-ultra',
+            'gemini-3.0-pro',
+            'gemini-3.0-flash',
+            'gemini-2.5-ultra',
+            'gemini-2.5-pro',
+            'gemini-2.5-flash',
+            'gemini-2.0-ultra-exp',
+            'gemini-2.0-pro-exp',
             'gemini-2.0-flash-exp',
+            
+            # Current stable models
             'gemini-1.5-pro',
             'gemini-1.5-flash',
+            
+            # Legacy fallback
             'gemini-pro'
         ]
         
