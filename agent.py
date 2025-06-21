@@ -45,11 +45,12 @@ class WorkFlowAgent:
                 print("2. Check my work status")
                 print("3. Generate work report")
                 print("4. Import CSV tasks")
-                print("5. Select GitHub repository")
-                print("6. Help")
-                print("7. Exit")
+                print("5. Export to Excel")
+                print("6. Select GitHub repository")
+                print("7. Help")
+                print("8. Exit")
                 
-                choice = input("\nEnter your choice (1-7): ").strip()
+                choice = input("\nEnter your choice (1-8): ").strip()
                 
                 if choice == "1":
                     self._test_connections()
@@ -60,14 +61,16 @@ class WorkFlowAgent:
                 elif choice == "4":
                     self._import_csv()
                 elif choice == "5":
-                    self._select_repository()
+                    self._export_to_excel()
                 elif choice == "6":
-                    self._show_help()
+                    self._select_repository()
                 elif choice == "7":
+                    self._show_help()
+                elif choice == "8":
                     print("👋 Goodbye! Thanks for using WorkFlow-AI-Journal!")
                     break
                 else:
-                    print("❌ Invalid choice. Please enter 1-7.")
+                    print("❌ Invalid choice. Please enter 1-8.")
                     
             except KeyboardInterrupt:
                 print("\n\n👋 Goodbye!")
@@ -190,16 +193,42 @@ class WorkFlowAgent:
         
         # Get user preferences
         print(f"\n⚙️  Work preferences (press Enter for defaults):")
-        daily_hours = input("Daily work hours [8]: ").strip() or "8"
-        meetings_per_week = input("Weekly meetings [2]: ").strip() or "2"
+        daily_hours = input("Daily work hours [7]: ").strip() or "7"
+        days_per_week = input("Working days per week [5]: ").strip() or "5"
         start_time = input("Start time [09:00]: ").strip() or "09:00"
+        meetings_per_week = input("Weekly meetings [2]: ").strip() or "2"
+        
+        # Get meeting details
+        meetings = []
+        try:
+            meetings_count = int(meetings_per_week)
+            if meetings_count > 0:
+                print(f"\n📅 Configure {meetings_count} weekly meetings:")
+                for i in range(meetings_count):
+                    meeting = self._get_meeting_details(i + 1)
+                    if meeting:
+                        meetings.append(meeting)
+        except ValueError:
+            meetings_count = 0
         
         user_preferences = {
-            'daily_hours': int(daily_hours),
-            'meetings_per_week': int(meetings_per_week),
+            'daily_hours': float(daily_hours),
+            'days_per_week': int(days_per_week),
+            'weekly_hours': float(daily_hours) * int(days_per_week),
             'start_time': start_time,
+            'meetings_per_week': int(meetings_per_week),
+            'meetings': meetings,
             'lunch_break': True
         }
+        
+        print(f"📊 Configuration: {user_preferences['daily_hours']}h/day × {user_preferences['days_per_week']} days = {user_preferences['weekly_hours']}h/week")
+        
+        if meetings:
+            print(f"📅 Weekly meetings:")
+            for meeting in meetings:
+                print(f"   • {meeting['day']} {meeting['start_time']}-{meeting['end_time']}: {meeting['description']}")
+        else:
+            print(f"📅 No weekly meetings configured")
         
         # Execute workflow
         print(f"\n🚀 Executing workflow...")
@@ -227,8 +256,73 @@ class WorkFlowAgent:
             for step in result['steps_completed']:
                 print(f"  • {step.replace('_', ' ').title()}")
         
-        # If successful, offer to import tasks
-        if result['success'] and 'scheduled_tasks' in result['data']:
+        # If successful, offer to import tasks with complete coverage validation
+        if result['success'] and 'parsed_tasks' in result['data']:
+            tasks = result['data']['parsed_tasks']
+            validation = result['data'].get('validation', {})
+            
+            if tasks:
+                print(f"\n📊 Complete Schedule Generated:")
+                print(f"  • Total tasks: {len(tasks)}")
+                print(f"  • Coverage: {validation.get('actual_hours', 0):.1f} hours")
+                print(f"  • Business days: {validation.get('business_days', 0)}")
+                
+                # Show validation status
+                if validation.get('valid'):
+                    print(f"  ✅ Complete time coverage validated")
+                else:
+                    print(f"  ⚠️ Coverage issues detected: {validation.get('message', 'Unknown')}")
+                    if validation.get('daily_issues'):
+                        print(f"  📋 Daily issues:")
+                        for issue in validation['daily_issues'][:3]:  # Show first 3
+                            print(f"    • {issue}")
+                        if len(validation['daily_issues']) > 3:
+                            print(f"    • ... and {len(validation['daily_issues']) - 3} more")
+                
+                # Show weekly distribution validation
+                weekly_validation = result['data'].get('weekly_validation', {})
+                if weekly_validation:
+                    print(f"  📊 Weekly distribution: {'✅ Even' if weekly_validation.get('valid') else '⚠️ Uneven'}")
+                    if not weekly_validation.get('valid') and 'problems' in weekly_validation:
+                        print(f"     Issues: {', '.join(weekly_validation['problems'][:2])}")  # Show first 2
+                
+                # Show sample tasks
+                print(f"\n📋 Sample schedule entries:")
+                for i, task in enumerate(tasks[:5], 1):
+                    print(f"  {i}. {task['date']} {task['start']}-{task['end']}: {task['description'][:50]}...")
+                
+                if len(tasks) > 5:
+                    print(f"  ... and {len(tasks) - 5} more tasks")
+                
+                # Save to CSV first
+                csv_file = self.workflow.save_tasks_to_csv(tasks)
+                
+                # Confirm before importing
+                print(f"\n🔍 BEFORE IMPORTING - Please review:")
+                print(f"  • Will DELETE all existing entries for this period")
+                print(f"  • Will import {len(tasks)} new time entries")
+                print(f"  • Total coverage: {validation.get('actual_hours', 0):.1f} hours")
+                
+                import_choice = input(f"\n⚠️ CONFIRM: Delete existing & import {len(tasks)} tasks to Clockify? (yes/no): ").strip().lower()
+                if import_choice in ['yes', 'y']:
+                    print(f"📤 Importing complete schedule to Clockify...")
+                    import_result = self.workflow.import_tasks_to_clockify(tasks)
+                    
+                    print(f"\n📊 Import Results:")
+                    print(f"  ✅ Successful: {import_result['imported_count']}")
+                    print(f"  ❌ Failed: {import_result['failed_count']}")
+                    
+                    if import_result['errors']:
+                        print(f"  Errors: {len(import_result['errors'])} (check logs for details)")
+                    
+                    if import_result['imported_count'] > 0:
+                        print(f"\n🎉 Complete schedule imported successfully!")
+                        print(f"💡 Your Clockify now has {validation.get('actual_hours', 0):.1f} hours of entries")
+                else:
+                    print(f"❌ Import cancelled. CSV file saved for manual review.")
+        
+        # Legacy fallback for old workflow format  
+        elif result['success'] and 'scheduled_tasks' in result['data']:
             scheduled_tasks = result['data']['scheduled_tasks']
             if scheduled_tasks:
                 # Show summary
@@ -348,10 +442,113 @@ class WorkFlowAgent:
         print("  • Automatic work tracking from GitHub")
         print("  • AI-generated task descriptions")
         print("  • Clockify time entry management")
-        print("  • Excel report generation")
+        print("  • Excel export with date grouping")
+        print("  • Complete time coverage validation")
         print("\n🆘 Support:")
         print("  • GitHub: github.com/yourusername/WorkFlow-AI-Journal")
         print("  • Documentation: README.md")
+
+    def _export_to_excel(self):
+        """Export Clockify data to Excel"""
+        print("\n📊 Export to Excel")
+        
+        if not config.clockify_api_key:
+            print("❌ Clockify API key required for export")
+            return
+        
+        # Get time range from user
+        time_range = input("What time range to export? (e.g., 'last 2 weeks', 'last month'): ").strip()
+        if not time_range:
+            print("❌ No time range specified")
+            return
+        
+        print(f"📤 Exporting Clockify data for: {time_range}")
+        
+        try:
+            # Export to Excel
+            result = self.workflow.export_to_excel(time_range)
+            
+            if result['success']:
+                print(f"✅ Excel file created: {result['filename']}")
+                print(f"📊 Total entries: {result['total_entries']}")
+                print(f"⏱️  Total hours: {result['total_hours']:.2f}")
+                print(f"📅 Date range: {result['date_range']}")
+                print(f"🔧 Method: {result.get('method_used', 'Unknown')}")
+                
+                # Show summary by date
+                if result.get('summary_by_date'):
+                    print(f"\n📋 Summary by date:")
+                    for date, hours in result['summary_by_date'].items():
+                        print(f"  • {date}: {hours:.2f} hours")
+            else:
+                print(f"❌ Export failed: {result['message']}")
+                
+        except Exception as e:
+            print(f"❌ Export error: {e}")
+    
+    def _get_meeting_details(self, meeting_num):
+        """Get details for a specific weekly meeting"""
+        print(f"\n🎯 Meeting {meeting_num} details:")
+        
+        # Day of week
+        days_map = {
+            '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', 
+            '4': 'Thursday', '5': 'Friday'
+        }
+        
+        print("Days: 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday")
+        while True:
+            try:
+                day_choice = input(f"Meeting {meeting_num} day (1-5): ").strip()
+                if day_choice in days_map:
+                    day_name = days_map[day_choice]
+                    break
+                print("❌ Please enter 1-5")
+            except KeyboardInterrupt:
+                return None
+        
+        # Start time
+        while True:
+            try:
+                start_time = input(f"Start time (HH:MM, e.g., 10:00): ").strip()
+                # Validate time format
+                from datetime import datetime
+                datetime.strptime(start_time, '%H:%M')
+                break
+            except ValueError:
+                print("❌ Please enter time in HH:MM format (e.g., 10:00)")
+            except KeyboardInterrupt:
+                return None
+        
+        # End time  
+        while True:
+            try:
+                end_time = input(f"End time (HH:MM, e.g., 11:00): ").strip()
+                # Validate time format and ensure it's after start time
+                start_dt = datetime.strptime(start_time, '%H:%M')
+                end_dt = datetime.strptime(end_time, '%H:%M') 
+                if end_dt > start_dt:
+                    break
+                else:
+                    print("❌ End time must be after start time")
+            except ValueError:
+                print("❌ Please enter time in HH:MM format (e.g., 11:00)")
+            except KeyboardInterrupt:
+                return None
+        
+        # Meeting name/description
+        description = input(f"Meeting description (e.g., 'Team Standup'): ").strip()
+        if not description:
+            description = f"Weekly Meeting {meeting_num}"
+        
+        return {
+            'day': day_name,
+            'day_num': int(day_choice),
+            'start_time': start_time,
+            'end_time': end_time,
+            'description': description,
+            'duration': (end_dt - start_dt).total_seconds() / 3600  # hours
+        }
 
 def main():
     """Entry point"""

@@ -9,6 +9,9 @@ generated_tasks_*.csv
 test_*.csv
 *.csv
 
+# Generated Excel files (user-specific)  
+clockify_export_*.xlsx
+
 # Python
 __pycache__/
 *.py[cod]
