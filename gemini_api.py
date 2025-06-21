@@ -1,4 +1,6 @@
 import logging
+import time
+from datetime import timedelta
 from config import config
 
 class GeminiAPI:
@@ -218,63 +220,108 @@ class GeminiAPI:
         except Exception as e:
             return {"name": "Unknown", "error": str(e)}
     
-    def generate_task_list(self, commits_data, user_preferences=None):
-        """Generate task list from GitHub commits"""
+    def generate_task_list(self, commits_data, user_preferences=None, max_retries=3):
+        """Generate task list from GitHub commits with retry logic"""
         if not self.model:
             return False, "Gemini client not initialized"
         
-        try:
-            # Build prompt
-            prompt = self._build_task_prompt(commits_data, user_preferences)
-            
-            response = self.model.generate_content(prompt)
-            if response and response.text:
-                return True, response.text
-            else:
-                return False, "Gemini returned empty response"
-        except Exception as e:
-            return False, f"Error generating tasks: {str(e)}"
+        for attempt in range(max_retries):
+            try:
+                # Build prompt
+                prompt = self._build_task_prompt(commits_data, user_preferences)
+                
+                # Add delay between retries to help with rate limiting
+                if attempt > 0:
+                    delay = 2 ** attempt  # Exponential backoff: 2s, 4s, 8s
+                    print(f"🔄 Retrying AI generation (attempt {attempt + 1}/{max_retries}) in {delay}s...")
+                    time.sleep(delay)
+                
+                response = self.model.generate_content(prompt)
+                if response and response.text:
+                    return True, response.text
+                else:
+                    logging.warning(f"Attempt {attempt + 1}: Gemini returned empty response")
+                    
+            except Exception as e:
+                error_msg = str(e)
+                logging.warning(f"Attempt {attempt + 1}: AI generation failed: {error_msg}")
+                
+                # Check if it's a retryable error
+                if "500" in error_msg or "internal error" in error_msg.lower() or "quota" in error_msg.lower():
+                    if attempt < max_retries - 1:
+                        continue  # Retry for server errors or quota issues
+                else:
+                    # Non-retryable error, fail immediately
+                    return False, f"Error generating tasks: {error_msg}"
+        
+        # All retries exhausted
+        return False, f"Failed to generate tasks after {max_retries} attempts. Gemini API may be experiencing issues."
     
     def _build_task_prompt(self, commits_data, user_preferences=None):
-        """Build prompt for task generation"""
-        working_hours = user_preferences.get('daily_hours', 8) if user_preferences else 8
-        meetings_per_week = user_preferences.get('meetings_per_week', 2) if user_preferences else 2
+        """Build a concise but effective prompt for time tracking generation"""
+        working_hours = user_preferences.get('daily_hours', 7) if user_preferences else 7
+        working_days = user_preferences.get('days_per_week', 5) if user_preferences else 5
+        weekly_hours = working_hours * working_days
+        start_date = user_preferences.get('start_date') if user_preferences else None
+        end_date = user_preferences.get('end_date') if user_preferences else None
         
-        prompt = f"""
-Based on the following GitHub commits, create a detailed task list in CSV format suitable for time tracking in Clockify.
+        # Calculate total expected hours more safely
+        total_expected_hours = "calculated automatically"
+        try:
+            if start_date and end_date:
+                from datetime import datetime
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+                work_days = 0
+                current = start_dt
+                while current <= end_dt:
+                    if current.weekday() < 5:  # Monday=0, Friday=4
+                        work_days += 1
+                    current += timedelta(days=1)
+                total_expected_hours = work_days * working_hours
+        except Exception:
+            total_expected_hours = f"~{weekly_hours * 4}"
+        
+        prompt = f"""Create a complete work schedule covering ALL hours evenly.
 
-Working parameters:
-- Daily working hours: {working_hours} hours
-- Weekly meetings: {meetings_per_week} meetings (30-40 minutes each)
-- Estimate realistic time for each development task
+REQUIREMENTS:
+- {working_hours} hours per day, {working_days} days per week
+- Period: {start_date} to {end_date}
+- Target total: {total_expected_hours} hours
+- Each week must have exactly {weekly_hours} hours
 
-GitHub Commits:
+WEEKLY MEETINGS:"""
+        
+        # Add meeting information concisely
+        meetings = user_preferences.get('meetings', []) if user_preferences else []
+        if meetings:
+            prompt += "\nInclude these meetings EVERY week:\n"
+            for meeting in meetings[:3]:  # Limit to 3 meetings to keep prompt manageable
+                prompt += f"- {meeting['day']} {meeting['start_time']}-{meeting['end_time']}: {meeting['description']}\n"
+        else:
+            prompt += "\nNo fixed meetings.\n"
+        
+        prompt += f"""
+COMMITS TO BASE TASKS ON:
 """
-        for i, commit in enumerate(commits_data[:20]):  # Limit to 20 commits
-            prompt += f"{i+1}. {commit['date']} - {commit['message']} (by {commit['author']})\n"
+        # Limit commits to prevent prompt from being too large
+        for i, commit in enumerate(commits_data[:20]):  # Reduced from 50 to 20
+            prompt += f"{i+1}. {commit['date'][:10]} - {commit['message'][:80]}...\n"
         
-        prompt += """
-
-Please generate a CSV with the following columns:
+        prompt += f"""
+OUTPUT FORMAT (CSV only):
 date,start,end,description,projectName,taskName,billable
 
-Guidelines:
-- Break down commits into logical development tasks
-- Estimate appropriate time for each task (coding usually takes 2-4 hours, testing 1-2 hours, etc.)
-- Include code reviews, testing, and documentation time
-- Use format: date (YYYY-MM-DD), start (HH:MM), end (HH:MM)
-- Make descriptions professional and detailed WITHOUT quotes or extra punctuation
-- Task descriptions should be plain text without surrounding quotes
-- Set billable to true for development work, false for meetings
-- Spread tasks across working days realistically
-- DO NOT wrap task descriptions in quotes - use plain text only
+RULES:
+1. Every day = exactly {working_hours} hours
+2. Every week = exactly {weekly_hours} hours  
+3. Include fixed meetings at specified times
+4. Distribute remaining time across development tasks
+5. Use commits as basis for task descriptions
+6. Fill any gaps with code review, testing, documentation
 
-Example format:
-2024-06-15,09:00,11:00,Implement user authentication system,Backend Development,Authentication,true
-2024-06-15,11:15,12:00,Code review for login functionality,Code Review,Review,true
-
-Return ONLY the CSV data without any additional text or formatting.
-"""
+Return ONLY CSV data, no other text."""
+        
         return prompt
     
     def get_api_key_help(self):
