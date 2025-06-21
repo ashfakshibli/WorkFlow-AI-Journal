@@ -262,11 +262,16 @@ Guidelines:
 - Break down commits into logical development tasks
 - Estimate appropriate time for each task (coding usually takes 2-4 hours, testing 1-2 hours, etc.)
 - Include code reviews, testing, and documentation time
-- Add the specified weekly meetings
 - Use format: date (YYYY-MM-DD), start (HH:MM), end (HH:MM)
-- Make descriptions professional and detailed
+- Make descriptions professional and detailed WITHOUT quotes or extra punctuation
+- Task descriptions should be plain text without surrounding quotes
 - Set billable to true for development work, false for meetings
 - Spread tasks across working days realistically
+- DO NOT wrap task descriptions in quotes - use plain text only
+
+Example format:
+2024-06-15,09:00,11:00,Implement user authentication system,Backend Development,Authentication,true
+2024-06-15,11:15,12:00,Code review for login functionality,Code Review,Review,true
 
 Return ONLY the CSV data without any additional text or formatting.
 """
