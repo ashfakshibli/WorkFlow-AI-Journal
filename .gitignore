@@ -4,6 +4,11 @@ _API_KEYS
 *.key
 secrets/
 
+# Generated CSV files (user-specific)
+generated_tasks_*.csv
+test_*.csv
+*.csv
+
 # Python
 __pycache__/
 *.py[cod]

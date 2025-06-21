@@ -7,13 +7,34 @@ An intelligent automation tool that generates professional work journals from Gi
 - **🔗 Multi-API Integration**: Seamlessly connects GitHub, Clockify, and Google Gemini AI
 - **🧠 Future-Proof AI Model Selection**: Dynamically adapts to new Gemini releases (2.5, 3.0, 4.0+) with intelligent scoring
 - **🎯 Thinking Model Priority**: Automatically selects thinking models for superior reasoning and analysis
+- **📅 Natural Language Date Processing**: Parse "last 2 weeks", "this month", "yesterday" and more
+- **⚡ Smart Workflow Orchestration**: Complete end-to-end automation with intelligent gap detection
 - **🤖 AI-Powered Task Generation**: Converts GitHub commits into detailed, time-estimated tasks
 - **⏰ Automatic Time Tracking**: Creates time entries in Clockify with realistic duration estimates
 - **📊 Intelligent Reporting**: Generates Excel reports for any time range (weeks, months, quarters)
 - **🏢 Organization Repository Access**: Works with both personal and organization repositories
 - **🔒 Security-First**: Secure API key management without hardcoded credentials
 - **🛡️ Smart Error Handling**: Comprehensive error handling with helpful user guidance
-- **📱 Simple Interface**: Clean command-line interface (CLI coming soon)
+- **📱 Interactive CLI**: Powerful command-line interface with guided workflows
+
+## 🎯 **Enhanced Phase 2 Features**
+
+### 📅 **Smart Task Scheduling**
+- **Distribution Options**: Choose between spreading tasks evenly or keeping exact commit times
+- **Business Hours Enforcement**: Automatically adjusts times to 9 AM - 6 PM working hours  
+- **Intelligent Spacing**: Adds breaks between tasks and avoids scheduling conflicts
+
+### 🏢 **Weekly Meeting Integration**
+- **Automatic Scheduling**: Add recurring weekly meetings to your time tracking
+- **Flexible Configuration**: Set meetings for any day/time with custom duration
+- **Multiple Meetings**: Support for standups, reviews, planning sessions, etc.
+- **Professional Organization**: Custom meeting titles and proper categorization
+
+### 🤖 **Enhanced AI Task Generation**
+- **Quote-Free Descriptions**: Clean, professional task descriptions without formatting issues
+- **Business-Appropriate**: Professional task naming suitable for corporate environments
+- **Thinking Model Power**: Leverages latest AI reasoning for accurate time estimates
+- **Context-Aware**: Considers realistic development patterns and work complexity
 
 ## 🧠 **Dynamic AI Model Selection**
 
@@ -88,13 +109,24 @@ python clockify_import_csv_api.py
 
 ## 📋 Usage Workflow
 
-1. **Query Time Range**: Ask the agent for reports (e.g., "last 2 weeks")
-2. **Data Check**: System checks existing Clockify entries
-3. **Gap Analysis**: Identifies missing time entries
-4. **Commit Retrieval**: Fetches GitHub commits for missing periods
-5. **AI Generation**: Gemini AI creates realistic task descriptions with time estimates
-6. **Auto-Import**: Tasks are automatically added to Clockify
-7. **Report Export**: Generates Excel report for the requested period
+1. **🗣️ Natural Language Query**: "Generate report for last 2 weeks"
+2. **📅 Smart Date Processing**: Automatically calculates date ranges and business days
+3. **🔍 Gap Analysis**: Identifies missing Clockify entries for work days
+4. **📦 Commit Retrieval**: Fetches relevant GitHub commits for missing periods
+5. **🧠 AI Task Generation**: Gemini AI creates realistic task descriptions with time estimates
+6. **⚡ Auto-Import**: Tasks are automatically added to Clockify
+7. **📊 Report Export**: Generates comprehensive reports for the requested period
+
+### 🎯 **Complete Automation Example**
+
+```bash
+python agent.py
+# Choose option 3: Generate work report
+# Enter: "last 2 weeks"
+# Select repository or use default
+# Review and confirm task import
+# ✅ Done! All missing work entries created automatically
+```
 
 ## 🛡️ Security & Privacy
 
@@ -116,6 +148,11 @@ Test the dynamic model selection algorithm:
 python test_dynamic_selection.py
 ```
 
+Test Phase 2 core logic:
+```bash
+python test_phase2.py
+```
+
 Diagnose Gemini API issues:
 ```bash
 python fix_gemini.py
@@ -126,6 +163,8 @@ This will:
 - ✅ Verify Clockify connection
 - ✅ Check GitHub access
 - ✅ Validate Gemini AI setup with best model
+- ✅ Test natural language date parsing
+- ✅ Validate workflow orchestration
 - ✅ Demonstrate dynamic version scoring
 
 ## 📁 Project Structure
@@ -177,12 +216,14 @@ If you use this project in your research or work, you can cite it as:
 
 ## 🚧 Roadmap
 
-- [ ] **Phase 1**: Core API integrations ✅
-- [ ] **Phase 2**: AI task generation
-- [ ] **Phase 3**: Excel report generation
+- [x] **Phase 1**: Core API integrations ✅
+- [x] **Phase 2**: Core logic and workflow automation ✅  
+- [ ] **Phase 3**: Excel report generation and advanced analytics
 - [ ] **Phase 4**: Web UI interface
-- [ ] **Phase 5**: Advanced analytics
+- [ ] **Phase 5**: Advanced AI features and learning
 - [ ] **Phase 6**: Team collaboration features
+
+**Current Status**: Phase 2 Complete - Full workflow automation ready! 🎉
 
 ## ❓ Troubleshooting
 

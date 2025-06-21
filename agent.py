@@ -15,6 +15,7 @@ from config import config
 from clockify_api import ClockifyAPI
 from github_api import GitHubAPI
 from gemini_api import GeminiAPI
+from workflow_coordinator import WorkflowCoordinator
 
 class WorkFlowAgent:
     """Main agent for coordinating work tracking automation"""
@@ -24,6 +25,7 @@ class WorkFlowAgent:
         self.clockify = ClockifyAPI()
         self.github = GitHubAPI()
         self.gemini = GeminiAPI()
+        self.workflow = WorkflowCoordinator()
         self.setup_complete = False
     
     def run(self):
@@ -164,16 +166,130 @@ class WorkFlowAgent:
     def _generate_report(self):
         """Generate work report workflow"""
         print("\n📊 Generate Work Report")
-        print("This feature is coming soon!")
-        print("\nIt will:")
-        print("• Analyze your specified time range")
-        print("• Check for missing Clockify entries")
-        print("• Generate tasks from GitHub commits")
-        print("• Create Excel reports")
         
-        time_range = input("\nWhat time range? (e.g., 'last 2 weeks', 'last month'): ")
-        print(f"📝 You requested: {time_range}")
-        print("🚧 Implementation in progress...")
+        if not config.clockify_api_key:
+            print("❌ Clockify API key required for report generation")
+            return
+        
+        # Get time range from user
+        time_range = input("What time range? (e.g., 'last 2 weeks', 'last month'): ").strip()
+        if not time_range:
+            print("❌ No time range specified")
+            return
+        
+        # Get repository (use default or ask user)
+        repository = config.default_github_repo
+        if not repository:
+            print("⚠️  No default repository configured")
+            repository = input("Enter GitHub repository (owner/repo-name): ").strip()
+            if not repository:
+                print("❌ No repository specified")
+                return
+        
+        print(f"📦 Using repository: {repository}")
+        
+        # Get user preferences
+        print(f"\n⚙️  Work preferences (press Enter for defaults):")
+        daily_hours = input("Daily work hours [8]: ").strip() or "8"
+        meetings_per_week = input("Weekly meetings [2]: ").strip() or "2"
+        start_time = input("Start time [09:00]: ").strip() or "09:00"
+        
+        user_preferences = {
+            'daily_hours': int(daily_hours),
+            'meetings_per_week': int(meetings_per_week),
+            'start_time': start_time,
+            'lunch_break': True
+        }
+        
+        # Execute workflow
+        print(f"\n🚀 Executing workflow...")
+        print("=" * 50)
+        
+        result = self.workflow.execute_workflow(
+            time_range=time_range,
+            repository=repository,
+            user_preferences=user_preferences
+        )
+        
+        # Display results
+        print(f"\n📊 Workflow Results:")
+        print(f"Status: {'✅ Success' if result['success'] else '❌ Failed'}")
+        print(f"Message: {result['message']}")
+        
+        if result['errors']:
+            print(f"\n❌ Errors:")
+            for error in result['errors']:
+                print(f"  • {error}")
+        
+        # Show workflow steps completed
+        if result['steps_completed']:
+            print(f"\n✅ Steps completed:")
+            for step in result['steps_completed']:
+                print(f"  • {step.replace('_', ' ').title()}")
+        
+        # If successful, offer to import tasks
+        if result['success'] and 'scheduled_tasks' in result['data']:
+            scheduled_tasks = result['data']['scheduled_tasks']
+            if scheduled_tasks:
+                # Show summary
+                meetings = [t for t in scheduled_tasks if t.get('is_meeting')]
+                work_tasks = [t for t in scheduled_tasks if not t.get('is_meeting')]
+                
+                print(f"\n📝 Generated Schedule:")
+                print(f"  • Work tasks: {len(work_tasks)}")
+                print(f"  • Weekly meetings: {len(meetings)}")
+                print(f"  • Total items: {len(scheduled_tasks)}")
+                
+                # Show sample tasks
+                print(f"\n📋 Sample scheduled items:")
+                for i, task in enumerate(scheduled_tasks[:5], 1):
+                    task_type = "📅" if task.get('is_meeting') else "⚡"
+                    print(f"  {task_type} {task['date']} {task['start']}-{task['end']}: {task['description'][:50]}...")
+                
+                if len(scheduled_tasks) > 5:
+                    print(f"  ... and {len(scheduled_tasks) - 5} more items")
+                
+                # Save to CSV first
+                csv_file = self.workflow.save_tasks_to_csv(scheduled_tasks)
+                
+                # Ask if user wants to import to Clockify
+                import_choice = input(f"\nImport {len(scheduled_tasks)} scheduled items to Clockify? (y/n): ").strip().lower()
+                if import_choice == 'y':
+                    print(f"📤 Importing scheduled items to Clockify...")
+                    import_result = self.workflow.import_tasks_to_clockify(scheduled_tasks)
+                    
+                    print(f"\n📊 Import Results:")
+                    print(f"  ✅ Successful: {import_result['imported_count']}")
+                    print(f"  ❌ Failed: {import_result['failed_count']}")
+                    
+                    if import_result['errors']:
+                        print(f"  Errors: {len(import_result['errors'])} (check logs for details)")
+        
+        # Fallback for old workflow format (backward compatibility)
+        elif result['success'] and 'parsed_tasks' in result['data']:
+            tasks = result['data']['parsed_tasks']
+            if tasks:
+                print(f"\n📝 Generated {len(tasks)} tasks")
+                
+                # Save to CSV first
+                csv_file = self.workflow.save_tasks_to_csv(tasks)
+                
+                # Ask if user wants to import to Clockify
+                import_choice = input(f"\nImport {len(tasks)} tasks to Clockify? (y/n): ").strip().lower()
+                if import_choice == 'y':
+                    print(f"📤 Importing tasks to Clockify...")
+                    import_result = self.workflow.import_tasks_to_clockify(tasks)
+                    
+                    print(f"\n📊 Import Results:")
+                    print(f"  ✅ Successful: {import_result['imported_count']}")
+                    print(f"  ❌ Failed: {import_result['failed_count']}")
+                    
+                    if import_result['errors']:
+                        print(f"  Errors: {len(import_result['errors'])} (check logs for details)")
+                else:
+                    print(f"💾 Tasks saved to {csv_file} - you can import manually later")
+        
+        print(f"\n🎉 Report generation complete!")
     
     def _import_csv(self):
         """Import CSV tasks to Clockify"""
